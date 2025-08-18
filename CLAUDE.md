@@ -4,7 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-这是一个 AI 面试系统的后端服务，基于 Spring Boot 3.2.0 开发，使用 Java 17。项目为前后端分离架构，为前端（预计运行在 http://localhost:5173）提供 RESTful API 接口。
+这是一个 AI 面试系统的后端服务，基于 Spring Boot 3.2.0 开发，使用 Java 17。项目为前后端分离架构，为前端（预计运行在 http://localhost:5173）提供接口，不要使用restful风格，我不喜欢他。
+我希望每当我有需求提出或者改动的时候，如果和该文档有冲突，你要及时修改文档。如果是文档中没有记录的，请记录到文档中。
 
 ## 核心技术栈
 
