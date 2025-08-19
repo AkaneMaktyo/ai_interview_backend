@@ -1,50 +1,55 @@
 package com.example.aiinterview.entity;
 
-import com.vladmihalcea.hibernate.type.json.JsonType;
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
+import java.time.LocalDateTime;
 
 /**
  * 学习统计实体类
  */
-@Entity
-@Table(name = "learning_stats")
+@TableName(value = "learning_stats", autoResultMap = true)
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class LearningStat {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
+    @TableField(value = "user_id")
     private Long userId;
 
-    @Column(name = "stat_date", nullable = false)
+    @TableField(value = "stat_date")
     private LocalDate statDate;
 
-    @Column(name = "questions_attempted")
-    private Integer questionsAttempted = 0;
+    @TableField(value = "questions_answered")
+    private Integer questionsAnswered = 0;
 
-    @Column(name = "questions_correct")
-    private Integer questionsCorrect = 0;
+    @TableField(value = "correct_answers")
+    private Integer correctAnswers = 0;
 
-    @Column(name = "total_score")
+    @TableField(value = "total_score")
     private Integer totalScore = 0;
 
-    @Column(name = "time_spent")
+    @TableField(value = "time_spent")
     private Integer timeSpent = 0;
 
-    @Type(JsonType.class)
-    @Column(name = "tags_practiced", columnDefinition = "jsonb")
-    private List<String> tagsPracticed;
+    @TableField(value = "avg_score")
+    private BigDecimal avgScore = BigDecimal.ZERO;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @TableField(value = "accuracy_rate")
+    private BigDecimal accuracyRate = BigDecimal.ZERO;
+
+    @TableField(value = "created_at", fill = FieldFill.INSERT)
+    private LocalDateTime createdAt;
+
+    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt;
+
+    // 临时字段，不映射到数据库
+    @TableField(exist = false)
     private User user;
 }

@@ -74,11 +74,13 @@
             <scope>runtime</scope>
         </dependency>
         
-        <!-- Spring Data JPA -->
+        <!-- 注释掉Spring Data JPA，避免与MyBatis Plus冲突 -->
+        <!--
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+        -->
         
         <!-- Flyway数据库迁移 -->
         <dependency>

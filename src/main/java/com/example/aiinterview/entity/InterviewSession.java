@@ -1,11 +1,9 @@
 package com.example.aiinterview.entity;
 
-import com.vladmihalcea.hibernate.type.json.JsonType;
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Type;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -14,61 +12,57 @@ import java.util.Map;
 /**
  * 面试会话实体类
  */
-@Entity
-@Table(name = "interview_sessions")
+@TableName(value = "interview_sessions", autoResultMap = true)
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class InterviewSession {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
+    @TableField(value = "user_id")
     private Long userId;
 
-    @Column(name = "session_name", length = 100)
+    @TableField(value = "session_name")
     private String sessionName;
 
-    @Column(name = "interview_type", nullable = false, length = 20)
+    @TableField(value = "interview_type")
     private String interviewType;
 
-    @Column(nullable = false, length = 10)
+    @TableField(value = "difficulty")
     private String difficulty;
 
-    @Column(nullable = false, length = 20)
+    @TableField(value = "position")
     private String position;
 
-    @Column(nullable = false, length = 20)
-    private String experience;
+    @TableField(value = "status")
+    private String status = "active";
 
-    @Column(name = "total_questions")
+    @TableField(value = "total_questions")
     private Integer totalQuestions = 0;
 
-    @Column(name = "completed_questions")
-    private Integer completedQuestions = 0;
+    @TableField(value = "answered_questions")
+    private Integer answeredQuestions = 0;
 
-    @Column(name = "overall_score", precision = 4, scale = 2)
-    private BigDecimal overallScore;
+    @TableField(value = "total_score")
+    private Integer totalScore = 0;
 
-    @Column(name = "duration_minutes")
-    private Integer durationMinutes;
-
-    @Column(length = 20)
-    private String status = "in_progress";
-
-    @CreationTimestamp
-    @Column(name = "started_at", updatable = false)
+    @TableField(value = "started_at", fill = FieldFill.INSERT)
     private LocalDateTime startedAt;
 
-    @Column(name = "completed_at")
-    private LocalDateTime completedAt;
+    @TableField(value = "ended_at")
+    private LocalDateTime endedAt;
 
-    @Type(JsonType.class)
-    @Column(columnDefinition = "jsonb")
-    private Map<String, Object> summary;
+    @TableField(value = "session_data", typeHandler = JacksonTypeHandler.class)
+    private Map<String, Object> sessionData;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @TableField(value = "created_at", fill = FieldFill.INSERT)
+    private LocalDateTime createdAt;
+
+    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt;
+
+    // 临时字段，不映射到数据库
+    @TableField(exist = false)
     private User user;
 }

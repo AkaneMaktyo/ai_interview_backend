@@ -1,38 +1,34 @@
 package com.example.aiinterview.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 /**
  * 知识点标签实体类
  */
-@Entity
-@Table(name = "knowledge_tags")
+@TableName(value = "knowledge_tags", autoResultMap = true)
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class KnowledgeTag {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @TableField(value = "name")
     private String name;
 
-    @Column(nullable = false, length = 50)
-    private String category;
-
-    @Column(columnDefinition = "TEXT")
+    @TableField(value = "description")
     private String description;
 
-    @Column(name = "parent_id")
-    private Long parentId;
+    @TableField(value = "category")
+    private String category = "technical";
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @TableField(value = "created_at", fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
+
+    @TableField(value = "is_active")
+    private Boolean isActive = true;
 }
