@@ -221,4 +221,90 @@ public class DoubaoUtil {
             throw new RuntimeException(e);
         }
     }
+    
+    /**
+     * 同步获取AI回答（用于面试功能）
+     *
+     * @param question 问题内容
+     * @param useDeepThinking 是否使用深度思考模式
+     * @return AI回答内容
+     */
+    public String getSyncResponse(String question, boolean useDeepThinking) {
+        List<ChatMessage> messages = new ArrayList<>();
+        messages.add(ChatMessage.builder()
+                .role(ChatMessageRole.USER)
+                .content(question)
+                .build());
+
+        StringBuilder response = new StringBuilder();
+        
+        try {
+            if (useDeepThinking) {
+                response.append(getSyncDeepThinkingResponse(messages));
+            } else {
+                response.append(getSyncNetworkResponse(messages));
+            }
+        } catch (Exception e) {
+            log.error("同步AI问答异常: ", e);
+            throw new RuntimeException("AI服务调用失败: " + e.getMessage());
+        }
+        
+        return response.toString();
+    }
+
+    /**
+     * 同步深度思考模式
+     */
+    private String getSyncDeepThinkingResponse(List<ChatMessage> messages) {
+        ChatCompletionRequest request = ChatCompletionRequest.builder()
+                .model(DEEP_THINK)
+                .messages(messages)
+                .stream(false)  // 非流式
+                .build();
+        
+        StringBuilder response = new StringBuilder();
+        try {
+            service.createChatCompletion(request)
+                    .getChoices()
+                    .forEach(choice -> {
+                        String content = choice.getMessage().getContent().toString();
+                        if (content != null && !content.isEmpty()) {
+                            response.append(content);
+                        }
+                    });
+        } catch (Exception e) {
+            log.error("同步深度思考模式调用失败: ", e);
+            throw new RuntimeException(e);
+        }
+        
+        return response.toString();
+    }
+
+    /**
+     * 同步联网模式
+     */
+    private String getSyncNetworkResponse(List<ChatMessage> messages) {
+        BotChatCompletionRequest networkRequest = BotChatCompletionRequest.builder()
+                .botId(NETWORK_BOT)
+                .messages(messages)
+                .stream(false)  // 非流式
+                .build();
+
+        StringBuilder response = new StringBuilder();
+        try {
+            service.createBotChatCompletion(networkRequest)
+                    .getChoices()
+                    .forEach(choice -> {
+                        String content = choice.getMessage().getContent().toString();
+                        if (content != null && !content.isEmpty()) {
+                            response.append(content);
+                        }
+                    });
+        } catch (Exception e) {
+            log.error("同步联网模式调用失败: ", e);
+            throw new RuntimeException(e);
+        }
+        
+        return response.toString();
+    }
 }

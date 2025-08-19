@@ -5,16 +5,25 @@ spring:
   application:
     name: ai-interview-backend
   
-  # H2 Database configuration
+  # H2内存数据库配置（用于演示）
   datasource:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
     username: sa
     password: password
   
+  # H2控制台（开发用）
   h2:
     console:
       enabled: true
+      path: /h2-console
+  
+  # JPA配置（用于快速启动）
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
 
 # MyBatis Plus configuration
 mybatis-plus:

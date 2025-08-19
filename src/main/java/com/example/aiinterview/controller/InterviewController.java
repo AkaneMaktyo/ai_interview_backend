@@ -1,6 +1,9 @@
 package com.example.aiinterview.controller;
 
 import com.example.aiinterview.dto.*;
+import com.example.aiinterview.entity.Question;
+import com.example.aiinterview.service.QuestionService;
+import com.example.aiinterview.service.AnswerRecordService;
 import com.example.aiinterview.util.DoubaoUtil;
 import com.example.aiinterview.util.HttpAiUtil;
 import com.example.aiinterview.util.SimpleAiUtil;
@@ -18,13 +21,15 @@ import java.util.concurrent.ThreadLocalRandom;
 @Slf4j
 @RestController
 @RequestMapping("/api/ai")
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:5175"})
 @RequiredArgsConstructor
 public class InterviewController {
 
     private final HttpAiUtil httpAiUtil;
     private final SimpleAiUtil simpleAiUtil;
     private final Optional<DoubaoUtil> doubaoUtil;
+    private final QuestionService questionService;
+    private final AnswerRecordService answerRecordService;
 
     /**
      * 获取面试题目
@@ -39,8 +44,8 @@ public class InterviewController {
             // 构建面试题目提示词
             String questionPrompt = buildQuestionPrompt(request);
             
-            // 使用AI生成题目，这里先用模拟数据
-            Map<String, Object> questionData = generateMockQuestion(request);
+            // 使用AI生成题目并保存到数据库
+            Map<String, Object> questionData = generateQuestionWithAI(questionPrompt, request);
             
             log.info("生成面试题目成功: {}", JSON.toJSONString(questionData));
             return ApiResponseDTO.success(questionData);
@@ -64,8 +69,12 @@ public class InterviewController {
             // 构建评估提示词
             String evaluationPrompt = buildEvaluationPrompt(request);
             
-            // 使用AI评估回答，这里先用模拟数据
-            FeedbackDTO feedback = generateMockFeedback(request);
+            // 使用AI评估回答
+            FeedbackDTO feedback = evaluateAnswerWithAI(evaluationPrompt, request);
+            
+            // 保存答题记录到数据库（使用默认用户ID: 1）
+            Long userId = 1L; // 临时使用固定用户ID，后续可通过登录信息获取
+            answerRecordService.saveAnswerRecord(request, feedback, userId);
             
             Map<String, Object> result = new HashMap<>();
             result.put("feedback", feedback);
@@ -76,6 +85,28 @@ public class InterviewController {
         } catch (Exception e) {
             log.error("提交回答失败", e);
             return ApiResponseDTO.error("提交回答失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取面试总结
+     * @param request 总结请求参数
+     * @return 面试总结
+     */
+    @PostMapping("/summary")
+    public ApiResponseDTO<SummaryDTO> getInterviewSummary(@RequestBody SummaryRequestDTO request) {
+        log.info("获取面试总结请求: {}", JSON.toJSONString(request));
+        
+        try {
+            // 生成面试总结
+            SummaryDTO summary = generateInterviewSummary(request);
+            
+            log.info("生成面试总结成功: {}", JSON.toJSONString(summary));
+            return ApiResponseDTO.success(summary);
+            
+        } catch (Exception e) {
+            log.error("获取面试总结失败", e);
+            return ApiResponseDTO.error("获取面试总结失败: " + e.getMessage());
         }
     }
 
@@ -118,9 +149,9 @@ public class InterviewController {
         prompt.append("面试题目：").append(request.getQuestion()).append("\n");
         prompt.append("候选人回答：").append(request.getAnswer()).append("\n\n");
         prompt.append("面试信息：\n");
-        prompt.append("- 类型：").append(getInterviewTypeText(request.getInterviewType())).append("\n");
-        prompt.append("- 难度：").append(getDifficultyText(request.getDifficulty())).append("\n");
-        prompt.append("- 职位：").append(getPositionText(request.getPosition())).append("\n\n");
+        prompt.append("- 类型：").append(getInterviewTypeText(request.getInterviewType() != null ? request.getInterviewType() : "technical")).append("\n");
+        prompt.append("- 难度：").append(getDifficultyText(request.getDifficulty() != null ? request.getDifficulty() : "medium")).append("\n");
+        prompt.append("- 职位：").append(getPositionText(request.getPosition() != null ? request.getPosition() : "frontend")).append("\n\n");
         
         prompt.append("请对这个回答进行评估，需要返回JSON格式：\n");
         prompt.append("{\n");
@@ -139,19 +170,162 @@ public class InterviewController {
     }
 
     /**
-     * 生成模拟面试题目
+     * 使用AI生成面试题目
      */
-    private Map<String, Object> generateMockQuestion(QuestionRequestDTO request) {
+    private Map<String, Object> generateQuestionWithAI(String prompt, QuestionRequestDTO request) {
         Map<String, Object> questionData = new HashMap<>();
         
-        // 根据面试类型生成不同的题目
-        String question = generateQuestionByType(request);
-        
-        questionData.put("question", question);
-        questionData.put("type", request.getInterviewType());
-        questionData.put("questionId", "mock_" + System.currentTimeMillis());
+        try {
+            String aiResponse;
+            
+            // 优先使用豆包AI
+            if (doubaoUtil.isPresent()) {
+                log.info("使用豆包AI生成面试题目");
+                aiResponse = doubaoUtil.get().getSyncResponse(prompt, false); // 不使用深度思考模式，用联网模式
+            } else {
+                log.info("豆包AI不可用，降级使用HTTP模式");
+                aiResponse = getHttpAiResponse(prompt);
+            }
+            
+            // 从AI响应中提取题目（AI应该直接返回题目内容）
+            String question = extractQuestionFromResponse(aiResponse);
+            
+            // 保存题目到数据库
+            Question savedQuestion = questionService.generateAndSaveQuestion(request, prompt, question);
+            
+            questionData.put("question", question);
+            questionData.put("type", request.getInterviewType());
+            questionData.put("questionId", savedQuestion.getId().toString()); // 使用数据库生成的真实ID
+            
+        } catch (Exception e) {
+            log.error("AI生成题目失败，使用模拟数据: ", e);
+            // 如果AI调用失败，回退到模拟数据
+            return generateMockQuestion(request);
+        }
         
         return questionData;
+    }
+    
+    /**
+     * 使用AI评估回答
+     */
+    private FeedbackDTO evaluateAnswerWithAI(String evaluationPrompt, AnswerRequestDTO request) {
+        try {
+            String aiResponse;
+            
+            // 优先使用豆包AI
+            if (doubaoUtil.isPresent()) {
+                log.info("使用豆包AI评估回答");
+                aiResponse = doubaoUtil.get().getSyncResponse(evaluationPrompt, true); // 使用深度思考模式
+            } else {
+                log.info("豆包AI不可用，降级使用HTTP模式");
+                aiResponse = getHttpAiResponse(evaluationPrompt);
+            }
+            
+            // 解析AI响应为反馈对象
+            return parseFeedbackFromResponse(aiResponse);
+            
+        } catch (Exception e) {
+            log.error("AI评估回答失败，使用模拟数据: ", e);
+            // 如果AI调用失败，回退到模拟数据
+            return generateMockFeedback(request);
+        }
+    }
+    
+    /**
+     * 使用HTTP方式调用AI（作为豆包AI的备选方案）
+     */
+    private String getHttpAiResponse(String prompt) {
+        // 这里可以实现HTTP方式的AI调用
+        // 暂时抛出异常，让它回退到模拟数据
+        throw new RuntimeException("HTTP AI调用未实现，回退到模拟数据");
+    }
+    
+    /**
+     * 从AI响应中提取题目内容
+     */
+    private String extractQuestionFromResponse(String response) {
+        if (response == null || response.trim().isEmpty()) {
+            throw new RuntimeException("AI返回空响应");
+        }
+        
+        // 简单的文本清理和提取
+        String question = response.trim();
+        
+        // 移除可能的前缀（如"题目："、"Question:"等）
+        question = question.replaceFirst("^(题目[:：]|问题[:：]|Question[:：]?|面试题[:：]?)\\s*", "");
+        
+        // 如果题目太短，可能不是有效题目
+        if (question.length() < 10) {
+            throw new RuntimeException("AI返回的题目过短: " + question);
+        }
+        
+        return question;
+    }
+    
+    /**
+     * 从AI响应中解析反馈信息
+     */
+    private FeedbackDTO parseFeedbackFromResponse(String response) {
+        try {
+            // 尝试解析JSON格式的回应
+            if (response.contains("{") && response.contains("}")) {
+                int startIndex = response.indexOf("{");
+                int endIndex = response.lastIndexOf("}") + 1;
+                String jsonStr = response.substring(startIndex, endIndex);
+                
+                Map<String, Object> jsonMap = JSON.parseObject(jsonStr, Map.class);
+                
+                FeedbackDTO feedback = new FeedbackDTO();
+                
+                // 解析评分
+                Object scoreObj = jsonMap.get("score");
+                if (scoreObj instanceof Number) {
+                    feedback.setScore(((Number) scoreObj).intValue());
+                } else {
+                    feedback.setScore(7); // 默认评分
+                }
+                
+                // 解析评价
+                Object commentObj = jsonMap.get("comment");
+                if (commentObj != null) {
+                    feedback.setComment(commentObj.toString());
+                } else {
+                    feedback.setComment("AI评估完成");
+                }
+                
+                // 解析建议
+                Object suggestionsObj = jsonMap.get("suggestions");
+                if (suggestionsObj instanceof List) {
+                    List<String> suggestions = new ArrayList<>();
+                    for (Object item : (List<?>) suggestionsObj) {
+                        if (item != null) {
+                            suggestions.add(item.toString());
+                        }
+                    }
+                    feedback.setSuggestions(suggestions);
+                } else {
+                    feedback.setSuggestions(Arrays.asList("建议继续深入学习相关知识点"));
+                }
+                
+                return feedback;
+            } else {
+                // 如果不是JSON格式，创建一个基础的反馈
+                FeedbackDTO feedback = new FeedbackDTO();
+                feedback.setScore(7);
+                feedback.setComment(response.length() > 200 ? response.substring(0, 200) + "..." : response);
+                feedback.setSuggestions(Arrays.asList("建议参考AI的详细分析"));
+                return feedback;
+            }
+        } catch (Exception e) {
+            log.error("解析AI反馈失败: ", e);
+            // 创建一个默认的反馈
+            FeedbackDTO feedback = new FeedbackDTO();
+            feedback.setScore(6);
+            feedback.setComment("AI反馈解析异常，请重试");
+            feedback.setSuggestions(Arrays.asList("请检查回答内容并重新提交"));
+            return feedback;
+        }
     }
 
     /**
@@ -185,6 +359,24 @@ public class InterviewController {
         // 随机选择一个题目
         int index = ThreadLocalRandom.current().nextInt(questions.size());
         return questions.get(index);
+    }
+
+    // ==================== 模拟数据方法（作为AI调用失败时的回退机制） ====================
+    
+    /**
+     * 生成模拟面试题目（回退机制）
+     */
+    private Map<String, Object> generateMockQuestion(QuestionRequestDTO request) {
+        Map<String, Object> questionData = new HashMap<>();
+        
+        // 根据面试类型生成不同的题目
+        String question = generateQuestionByType(request);
+        
+        questionData.put("question", question);
+        questionData.put("type", request.getInterviewType());
+        questionData.put("questionId", "fallback_" + System.currentTimeMillis());
+        
+        return questionData;
     }
 
     /**
@@ -283,7 +475,7 @@ public class InterviewController {
     }
 
     /**
-     * 生成模拟反馈
+     * 生成模拟反馈（回退机制）
      */
     private FeedbackDTO generateMockFeedback(AnswerRequestDTO request) {
         FeedbackDTO feedback = new FeedbackDTO();
@@ -419,5 +611,143 @@ public class InterviewController {
             case "senior": return "高级 (5年以上)";
             default: return "中级";
         }
+    }
+
+    /**
+     * 生成面试总结
+     */
+    private SummaryDTO generateInterviewSummary(SummaryRequestDTO request) {
+        SummaryDTO summary = new SummaryDTO();
+        
+        // 计算总体评分
+        int totalScore = 0;
+        int questionCount = 0;
+        
+        if (request.getHistory() != null) {
+            for (InterviewHistoryDTO history : request.getHistory()) {
+                if (history.getFeedback() != null && history.getFeedback().getScore() != null) {
+                    totalScore += history.getFeedback().getScore();
+                    questionCount++;
+                }
+            }
+        }
+        
+        int overallScore = questionCount > 0 ? Math.round((float) totalScore / questionCount) : 5;
+        summary.setOverallScore(overallScore);
+        summary.setAnsweredQuestions(questionCount);
+        summary.setTotalDuration(request.getInterviewDuration() != null ? request.getInterviewDuration() : 30);
+        
+        // 生成总结评价
+        summary.setOverallComment(generateOverallComment(overallScore, request));
+        
+        // 生成能力评分
+        Map<String, Integer> skillScores = new HashMap<>();
+        skillScores.put("技术能力", adjustScore(overallScore, -1, 1));
+        skillScores.put("逻辑思维", adjustScore(overallScore, -1, 1));
+        skillScores.put("表达能力", adjustScore(overallScore, -1, 1));
+        skillScores.put("问题分析", adjustScore(overallScore, -1, 1));
+        skillScores.put("解决方案", adjustScore(overallScore, -1, 1));
+        summary.setSkillScores(skillScores);
+        
+        // 生成优势和不足
+        summary.setStrengths(generateStrengths(overallScore));
+        summary.setWeaknesses(generateWeaknesses(overallScore));
+        summary.setRecommendations(generateRecommendations(overallScore, request.getPosition()));
+        
+        return summary;
+    }
+    
+    private int adjustScore(int baseScore, int minAdjust, int maxAdjust) {
+        int adjustment = ThreadLocalRandom.current().nextInt(minAdjust, maxAdjust + 1);
+        return Math.max(1, Math.min(10, baseScore + adjustment));
+    }
+    
+    private String generateOverallComment(int score, SummaryRequestDTO request) {
+        String position = getPositionText(request.getPosition());
+        String experience = getExperienceText(request.getExperience());
+        
+        if (score >= 8) {
+            return String.format("候选人在%s面试中表现优秀，展现了扎实的技术基础和良好的问题分析能力。" +
+                    "回答逻辑清晰，技术深度适合%s的要求。建议进入下一轮面试。", position, experience);
+        } else if (score >= 6) {
+            return String.format("候选人在%s面试中表现良好，具备一定的技术能力。" +
+                    "在部分问题上展现了正确的理解，但在深度和广度上还有提升空间。符合%s的基本要求。", 
+                    position, experience);
+        } else if (score >= 4) {
+            return String.format("候选人对%s相关技术有基础了解，但在回答深度和准确性上需要加强。" +
+                    "建议继续学习相关技术知识，提高技术水平后再次尝试%s职位。", position, experience);
+        } else {
+            return String.format("候选人在%s面试中表现不够理想，技术基础较为薄弱。" +
+                    "建议系统性地学习相关技术知识，积累实践经验后再次申请%s职位。", position, experience);
+        }
+    }
+    
+    private List<String> generateStrengths(int score) {
+        List<String> allStrengths = Arrays.asList(
+            "回答逻辑清晰，思路条理分明",
+            "技术基础扎实，概念理解准确",
+            "能够结合实际场景分析问题",
+            "表达能力较强，沟通顺畅",
+            "对技术细节有较深入的理解",
+            "具备良好的问题分析能力",
+            "回答覆盖面广，知识面较宽",
+            "能够提出创新性的解决方案"
+        );
+        
+        List<String> strengths = new ArrayList<>();
+        int count = Math.min(score / 2 + 1, 4);
+        
+        Collections.shuffle(allStrengths);
+        for (int i = 0; i < Math.min(count, allStrengths.size()); i++) {
+            strengths.add(allStrengths.get(i));
+        }
+        
+        return strengths;
+    }
+    
+    private List<String> generateWeaknesses(int score) {
+        List<String> allWeaknesses = Arrays.asList(
+            "部分回答缺乏技术深度",
+            "对某些概念的理解还不够准确",
+            "实际案例分享较少",
+            "回答时间把控需要改善",
+            "技术术语使用不够准确",
+            "逻辑结构有待优化",
+            "对新技术的了解有限",
+            "缺乏系统性的思考方式"
+        );
+        
+        List<String> weaknesses = new ArrayList<>();
+        int count = Math.max(1, (10 - score) / 2 + 1);
+        count = Math.min(count, 3);
+        
+        Collections.shuffle(allWeaknesses);
+        for (int i = 0; i < Math.min(count, allWeaknesses.size()); i++) {
+            weaknesses.add(allWeaknesses.get(i));
+        }
+        
+        return weaknesses;
+    }
+    
+    private List<String> generateRecommendations(int score, String position) {
+        List<String> recommendations = new ArrayList<>();
+        
+        if (score < 6) {
+            recommendations.add("建议系统性地学习" + getPositionText(position) + "相关的核心技术");
+            recommendations.add("多做实际项目练习，积累实战经验");
+            recommendations.add("关注行业最新技术动态和最佳实践");
+        } else if (score < 8) {
+            recommendations.add("继续深入学习技术细节和底层原理");
+            recommendations.add("多参与开源项目或技术社区交流");
+            recommendations.add("提高技术方案的设计和架构能力");
+        } else {
+            recommendations.add("可以考虑技术领导或架构师方向发展");
+            recommendations.add("分享技术经验，帮助团队成长");
+            recommendations.add("关注前沿技术，推动技术创新");
+        }
+        
+        recommendations.add("加强沟通表达能力，提升面试技巧");
+        
+        return recommendations;
     }
 }

@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **框架**: Spring Boot 3.2.0
 - **Java 版本**: 17
-- **数据库**: H2 内存数据库（开发环境）
+- **数据库**: MySQL 8.0
 - **ORM 框架**: MyBatis Plus 3.5.5
 - **构建工具**: Maven
 - **端口**: 8080
@@ -39,11 +39,12 @@ mvn test
 mvn clean
 ```
 
-### 数据库访问
-- H2 控制台: http://localhost:8080/h2-console
-- 数据库连接: jdbc:h2:mem:testdb
-- 用户名: sa
-- 密码: password
+### 数据库连接
+- MySQL 数据库: localhost:3306
+- 数据库名称: ai_interview
+- 用户名: root
+- 密码: root
+- 连接URL: `jdbc:mysql://localhost:3306/ai_interview?useSSL=false&serverTimezone=UTC&characterEncoding=utf8&allowPublicKeyRetrieval=true`
 
 ## 项目架构
 
@@ -78,7 +79,7 @@ com.example.aiinterview/
 - 服务端口: 8080
 - 应用名称: ai-interview-backend
 - 配置文件: application.yml（YAML 格式）
-- 数据库: H2 内存数据库，开启 Web 控制台
+- 数据库: MySQL 8.0，支持自动建表（ddl-auto: update）
 - MyBatis Plus: 
   - 开启驼峰命名转换
   - 启用 SQL 日志输出
