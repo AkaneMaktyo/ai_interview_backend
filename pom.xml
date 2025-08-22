@@ -54,23 +54,25 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         
+        <!-- 暂时移除MyBatis Plus，使用JDBC -->
+        <!--
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
-            <version>3.5.5</version>
+            <version>3.5.3</version>
+        </dependency>
+        -->
+        
+        <!-- Spring JDBC -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
         
-        <!-- 数据库驱动 -->
+        <!-- MySQL数据库驱动 -->
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        
-        <!-- H2内存数据库（用于演示） -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
         
@@ -82,11 +84,13 @@
         </dependency>
         -->
         
-        <!-- Flyway数据库迁移 -->
+        <!-- Flyway数据库迁移 - 暂时禁用，避免与Spring SQL初始化冲突 -->
+        <!--
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
         </dependency>
+        -->
         
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -123,11 +127,14 @@
             <version>3.1.8</version>
         </dependency>
 
+        <!-- 豆包AI SDK - 使用固定版本避免LATEST问题 -->
+        <!--
         <dependency>
             <groupId>com.volcengine</groupId>
             <artifactId>volcengine-java-sdk-ark-runtime</artifactId>
             <version>LATEST</version>
         </dependency>
+        -->
         
         <!-- FastJSON -->
         <dependency>

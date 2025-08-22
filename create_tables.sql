@@ -1,4 +1,6 @@
--- MySQL数据库初始化脚本
+-- MySQL数据库建表脚本
+
+USE ai_interview;
 
 -- 创建用户表
 CREATE TABLE IF NOT EXISTS users (

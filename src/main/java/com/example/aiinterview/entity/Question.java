@@ -1,66 +1,45 @@
 package com.example.aiinterview.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
- * 题目实体类
+ * 题目实体
  */
-@TableName(value = "questions", autoResultMap = true)
 @Data
-@EqualsAndHashCode(callSuper = false)
+@NoArgsConstructor
+@AllArgsConstructor
 public class Question {
-
-    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
-
-    @TableField("title")
     private String title;
-
-    @TableField("content")
     private String content;
-
-    @TableField("question_type")
     private String questionType;
-
-    @TableField("difficulty")
     private String difficulty;
-
-    @TableField("position")
     private String position;
-
-    @TableField(value = "tags", typeHandler = JacksonTypeHandler.class)
-    private List<String> tags;
-
-    @TableField("expected_answer")
+    private String tags;
     private String expectedAnswer;
-
-    @TableField(value = "evaluation_criteria", typeHandler = JacksonTypeHandler.class)
-    private List<String> evaluationCriteria;
-
-    @TableField(value = "hints", typeHandler = JacksonTypeHandler.class)
-    private List<String> hints;
-
-    @TableField("ai_generated")
-    private Boolean aiGenerated = true;
-
-    @TableField("ai_prompt")
+    private String evaluationCriteria;
+    private String hints;
+    private Boolean aiGenerated;
     private String aiPrompt;
-
-    @TableField("created_by")
     private Long createdBy;
-
-    @TableField(value = "created_at", fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
-
-    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedAt;
-
-    @TableField("is_active")
-    private Boolean isActive = true;
+    private Boolean isActive;
+    
+    // 构造函数用于创建新题目
+    public Question(String title, String content, String questionType, 
+                   String difficulty, String position) {
+        this.title = title;
+        this.content = content;
+        this.questionType = questionType;
+        this.difficulty = difficulty;
+        this.position = position;
+        this.aiGenerated = true;
+        this.isActive = true;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 }

@@ -5,37 +5,12 @@ spring:
   application:
     name: ai-interview-backend
   
-  # H2内存数据库配置
+  # MySQL数据库配置
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL;DATABASE_TO_LOWER=TRUE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 
-  
-  # H2控制台
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-  
-  # SQL初始化
-  sql:
-    init:
-      mode: always
-      schema-locations: classpath:data.sql
-
-# MyBatis Plus配置
-mybatis-plus:
-  configuration:
-    map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-  global-config:
-    db-config:
-      id-type: auto
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
-  type-aliases-package: com.example.aiinterview.entity
+    url: jdbc:mysql://localhost:3306/ai_interview?useSSL=false&serverTimezone=UTC&characterEncoding=utf8&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root
 
 logging:
   level:

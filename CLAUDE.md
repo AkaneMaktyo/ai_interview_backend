@@ -5,6 +5,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 项目概述
 
 这是一个 AI 面试系统的后端服务，基于 Spring Boot 3.2.0 开发，使用 Java 17。项目为前后端分离架构，为前端提供接口，不要使用restful风格，我不喜欢他。
+
+## 最新进展 (2025-08-21)
+
+✅ **已完成的功能模块：**
+- Spring Boot 应用成功启动和运行 
+- MySQL 数据库连接和7张核心表创建
+- 用户管理完整CRUD功能（使用Spring JDBC + Lombok）
+- 数据库连接测试接口
+- 基础API接口（hello、status、test）
+
+✅ **技术架构优化：**
+- 移除了MyBatis Plus（版本兼容性问题），改用Spring JDBC  
+- 全面使用Lombok简化代码（@Data, @RequiredArgsConstructor）
+- 采用构造器注入替代字段注入，符合最佳实践
+- 代码行数控制良好，实体类仅34行，符合200行限制
+
+✅ **当前可用API接口：**
+- `GET /api/hello` - 服务状态检查
+- `GET /api/status` - 详细运行状态  
+- `POST /api/test` - 基础功能测试
+- `GET /api/database/test-connection` - 数据库连接测试
+- `GET /api/database/tables` - 查看数据库表结构
+- `GET /api/database/user-count` - 获取用户统计
+- `GET /api/users/list` - 获取所有用户
+- `GET /api/users/get?id={id}` - 根据ID获取用户
+- `POST /api/users/create` - 创建新用户（username, email, nickname, level）
+- `POST /api/users/update` - 更新用户信息  
+- `POST /api/users/delete` - 删除用户
+- `GET /api/users/count` - 获取用户总数
 我希望每当我有需求提出或者改动的时候，如果和该文档有冲突，你要及时修改文档。如果是文档中没有记录的，请按需记录到文档中，readme文件也应该适时更新。
 
 ## 核心技术栈
@@ -12,12 +41,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **框架**: Spring Boot 3.2.0
 - **Java 版本**: 17
 - **数据库**: MySQL 8.0
-- **ORM 框架**: MyBatis Plus 3.5.5
+- **ORM 框架**: ~~MyBatis Plus 3.5.5~~ → **Spring JDBC**（已迁移，解决版本兼容性问题）
 - **构建工具**: Maven
 - **端口**: 8080
 - **AI 集成**: 豆包AI（深度思考 + 联网模式）
 - **缓存**: Spring Data Redis
-- **工具库**: Hutool、FastJSON、Lombok
+- **工具库**: **Lombok**（@Data、@RequiredArgsConstructor）、Hutool、FastJSON
 
 ## 开发命令
 
@@ -52,12 +81,14 @@ mvn clean
 ```
 com.example.aiinterview/
 ├── AiInterviewApplication.java     # 主启动类
-├── config/                         # 配置类
-│   ├── MybatisPlusConfig.java      # MyBatis Plus 配置
-│   └── RedisCache.java             # Redis缓存工具类
+├── entity/                         # 实体类（使用Lombok）
+│   └── User.java                   # 用户实体（@Data、@NoArgsConstructor、@AllArgsConstructor）
+├── service/                        # 业务逻辑层  
+│   └── UserService.java            # 用户服务（@RequiredArgsConstructor）
 ├── controller/                     # REST 控制器层
-│   ├── HelloController.java        # 基础 API 接口
-│   └── AiController.java           # AI问答接口控制器
+│   ├── BasicController.java        # 基础 API 接口
+│   ├── DatabaseTestController.java # 数据库测试接口
+│   └── UserController.java         # 用户管理CRUD接口
 └── util/                           # 工具类
     └── DoubaoUtil.java             # 豆包AI工具类
 ```
@@ -98,20 +129,24 @@ com.example.aiinterview/
 - 保持单一职责原则
 - 使用清晰的命名约定
 - 及时重构重复代码
-- **优先使用Lombok注解进行依赖注入**：
-  - 使用`@RequiredArgsConstructor`替代字段注入
+- **优先使用Lombok注解**：
+  - 实体类使用`@Data`自动生成getter/setter/toString/equals/hashCode
+  - 使用`@RequiredArgsConstructor`进行构造器依赖注入
   - 必需依赖使用`private final`字段
-  - 可选依赖使用`private final Optional<T>`配合`@RequiredArgsConstructor`
-  - 避免使用`@Autowired(required = false)`，改用Optional模式
+  - 避免使用`@Autowired`字段注入，改用构造器注入
+- **数据库访问层**：
+  - 当前使用Spring JDBC + JdbcTemplate进行数据库操作  
+  - 手写SQL语句，避免ORM复杂性和版本兼容问题
+  - 使用RowMapper进行结果集映射
 
 ### 扩展建议
 后续开发可能需要添加的模块：
-- `service/` - 业务逻辑层
-- `entity/` - 数据实体类
-- `mapper/` - MyBatis Plus 数据访问层
+- `service/` - 业务逻辑层（✅ 已创建UserService）
+- `entity/` - 数据实体类（✅ 已创建User实体）
+- ~~`mapper/` - MyBatis Plus 数据访问层~~ （已迁移至Service层直接使用JdbcTemplate）
 - `dto/` - 数据传输对象
-- `config/` - 配置类（已创建）
-- `util/` - 工具类（已创建）
+- `config/` - 配置类
+- `util/` - 工具类（已创建基础结构）
 
 ## AI功能模块
 

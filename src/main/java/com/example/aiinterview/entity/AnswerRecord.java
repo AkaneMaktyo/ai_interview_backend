@@ -1,64 +1,46 @@
 package com.example.aiinterview.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
-import java.util.Map;
 
 /**
- * 答题记录实体类
+ * 答题记录实体
  */
-@TableName(value = "answer_records", autoResultMap = true)
 @Data
-@EqualsAndHashCode(callSuper = false)
+@NoArgsConstructor
+@AllArgsConstructor
 public class AnswerRecord {
-
-    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
-
-    @TableField("user_id")
     private Long userId;
-
-    @TableField("question_id")
     private Long questionId;
-
-    @TableField("user_answer")
     private String userAnswer;
-
-    @TableField(value = "ai_evaluation", typeHandler = JacksonTypeHandler.class)
-    private Map<String, Object> aiEvaluation;
-
-    @TableField("score")
     private Integer score;
-
-    @TableField("time_spent")
-    private Integer timeSpent;
-
-    @TableField("attempt_count")
-    private Integer attemptCount = 1;
-
-    @TableField("interview_type")
     private String interviewType;
-
-    @TableField("difficulty")
     private String difficulty;
-
-    @TableField("position")
     private String position;
-
-    @TableField("status")
-    private String status = "completed";
-
-    @TableField(value = "created_at", fill = FieldFill.INSERT)
+    private Integer timeSpent;
+    private Integer attemptCount;
+    private String status;
+    private String aiEvaluation;
     private LocalDateTime createdAt;
-
-    // 关联的题目信息（需要单独查询或通过联表查询获取）
-    @TableField(exist = false)
-    private Question question;
-
-    @TableField(exist = false)
-    private User user;
+    private LocalDateTime updatedAt;
+    
+    // 构造函数用于创建新答题记录
+    public AnswerRecord(Long userId, Long questionId, String userAnswer, Integer score,
+                       String interviewType, String difficulty, String position, String aiEvaluation) {
+        this.userId = userId;
+        this.questionId = questionId;
+        this.userAnswer = userAnswer;
+        this.score = score;
+        this.interviewType = interviewType;
+        this.difficulty = difficulty;
+        this.position = position;
+        this.aiEvaluation = aiEvaluation;
+        this.attemptCount = 1;
+        this.status = "completed";
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 }
