@@ -12,6 +12,48 @@ spring:
     username: root
     password: root
 
+# MyBatis Plus配置
+mybatis-plus:
+  # 配置mapper xml文件路径
+  mapper-locations: classpath*:/mapper/**/*.xml
+  # 配置实体类扫描包
+  type-aliases-package: com.zsj.aiinterview.entity
+  # 全局配置
+  global-config:
+    # 数据库相关配置
+    db-config:
+      # 主键策略：自动递增
+      id-type: auto
+      # 表名下划线命名
+      table-underline: true
+      # 逻辑删除字段
+      logic-delete-field: deleted
+      # 逻辑删除全局值（1表示已删除）
+      logic-delete-value: 1
+      # 逻辑未删除全局值（0表示未删除）
+      logic-not-delete-value: 0
+  # 原生配置
+  configuration:
+    # 是否开启自动驼峰命名规则映射
+    map-underscore-to-camel-case: true
+    # 开启Mybatis二级缓存，默认为true
+    cache-enabled: false
+    # 日志打印
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 豆包AI配置
+doubao:
+  # API密钥（请替换为你自己的密钥）
+  api-key: f829290f-bb20-4692-904a-b812e0da770b
+  # 基础URL
+  base-url: https://ark.cn-beijing.volces.com/api/v3
+  # 标准模型ID
+  model-id: doubao-pro-4k
+  # 深度思考模型ID
+  thinking-model: doubao-1-5-thinking-vision-pro-250428
+  # 联网机器人ID
+  network-bot: bot-20250514171832-w4g9f
+
 logging:
   level:
-    com.example.aiinterview: DEBUG
+    com.zsj.aiinterview: DEBUG

@@ -12,7 +12,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.example</groupId>
+    <groupId>com.zsj</groupId>
     <artifactId>ai-interview-backend</artifactId>
     <version>1.0.0</version>
     <name>AI Interview Backend</name>
@@ -54,19 +54,11 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         
-        <!-- 暂时移除MyBatis Plus，使用JDBC -->
-        <!--
+        <!-- MyBatis Plus -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
-            <version>3.5.3</version>
-        </dependency>
-        -->
-        
-        <!-- Spring JDBC -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-jdbc</artifactId>
+            <version>3.5.3.1</version>
         </dependency>
         
         <!-- MySQL数据库驱动 -->
@@ -75,22 +67,7 @@
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
-        
-        <!-- 注释掉Spring Data JPA，避免与MyBatis Plus冲突 -->
-        <!--
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-        -->
-        
-        <!-- Flyway数据库迁移 - 暂时禁用，避免与Spring SQL初始化冲突 -->
-        <!--
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-        </dependency>
-        -->
+
         
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -98,43 +75,12 @@
             <scope>test</scope>
         </dependency>
         
-        <!-- 暂时注释掉豆包AI依赖，如果仓库中不存在的话 -->
-        <!--
-        <dependency>
-            <groupId>com.volcengine</groupId>
-            <artifactId>volcengine-java-sdk-ark-runtime</artifactId>
-            <version>0.1.15</version>
-        </dependency>
-        -->
-        
-        <!-- 替代方案：使用HTTP客户端直接调用AI API -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
-        
-        <!-- OkHttp3 - 豆包SDK依赖 -->
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-            <version>4.12.0</version>
-        </dependency>
-        
-        <!-- RxJava - 豆包SDK依赖 -->
-        <dependency>
-            <groupId>io.reactivex.rxjava3</groupId>
-            <artifactId>rxjava</artifactId>
-            <version>3.1.8</version>
-        </dependency>
-
-        <!-- 豆包AI SDK - 使用固定版本避免LATEST问题 -->
-        <!--
+        <!-- 豆包AI SDK - 使用官方SDK -->
         <dependency>
             <groupId>com.volcengine</groupId>
             <artifactId>volcengine-java-sdk-ark-runtime</artifactId>
             <version>LATEST</version>
         </dependency>
-        -->
         
         <!-- FastJSON -->
         <dependency>
